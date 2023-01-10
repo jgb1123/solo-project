@@ -7,7 +7,7 @@ build/
 
 # yml, properties #
 *.yml
-application.properties
+*.properties
 
 ### Java template
 # Compiled class file

@@ -1,21 +1,25 @@
 #!/usr/bin/env bash
 
-PROJECT_ROOT="/home/ec2-user/app/v1/solo-project"
-JAR_FILE="$PROJECT_ROOT/build.libs/community-0.0.1-SNAPSHOT.jar
+ABSPATH=$(readlink -f $0)
+ABSDIR=$(dirname $ABSPATH)
+source ${ABSDIR}/profile.sh
+REPOSITORY="/home/ec2-user/app/v1"
+PROJECT_NAME=solo-project
 
-APP_LOG="$PROJECT_ROOT/application.log"
-ERROR_LOG="$PROJECT_ROOT/error.log"
-DEPLOY_LOG="$PROJECT_ROOT/deploy.log"
+echo "> jar 파일 복사"
+cp $REPOSITORY/$PROJECT_NAME/build/libs/*.jar $REPOSITORY
 
-TIME_NOW=$(date +%c)
+echo "> 새 애플리케이션 배포"
+JAR_NAME=$(ls -tr $REPOSITORY/*.jar | tail -n 1)
+echo "> JAR Name: $JAR_NAME"
+echo "> $JAR_NAME 에 실행권한 추가"
+chmod +x $JAR_NAME
 
-# build 파일 복사
-echo "$TIME_NOW > $JAR_FILE 파일 복사" >> $DEPLOY_LOG
-cp $PROJECT_ROOT/build/libs/*.jar $JAR_FILE
+echo "> $JAR_NAME 실행"
 
-# jar 파일 실행
-echo "$TIME_NOW > $JAR_FILE 파일 실행" >> $DEPLOY_LOG
-nohup java -jar $JAR_FILE > $APP_LOG 2> $ERROR_LOG &
+IDLE_PROFILE=$(find_idle_profile)
 
-CURRENT_PID=$(pgrep -f $JAR_FILE)
-echo "$TIME_NOW > 실행된 프로세스 아이디 $CURRENT_PID 입니다." >> $DEPLOY_LOG
+echo "> $JAR_NAME 를 profile=$IDLE_PROFILE 로 실행합니다."
+
+nohup java -jar -Dspring.profiles.active=$IDLE_PROFILE $JAR_NAME > $REPOSITORY/nohup.out 2>&1 &
+
